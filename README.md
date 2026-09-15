@@ -1,122 +1,90 @@
-# how-to-pass-the-item-data-as-command-parameter-in-.net-maui-listview
+# How to pass the item data as command parameter in ItemTapped command in .NET MAUI ListView?
 
-This repository contains a sample demonstrating how to  pass the item data as command parameter in ItemTappedCommand in .NET MAUI ListView (SfListView).
+In [.NET MAUI ListView (SfListView)](https://help.syncfusion.com/maui/listview/getting-started), data items can be passed to the `ViewModel` using the `EventsToCommand` behavior to adhere to the MVVM pattern.
 
-## Sample
+This article demonstrates how to pass item data as a command parameter in the [ItemTapped](https://help.syncfusion.com/maui/listview/working-with-sflistview#tapped-event) command.
 
-```xaml
-<ContentPage.Resources>
-    <ResourceDictionary>
-        <local:CustomConverter x:Key="EventArgs" />
-    </ResourceDictionary>
-</ContentPage.Resources>
+**C#**
+``` 
+ public class ContactsViewModel
+ {
+     Command<object> tapCommand;
+       
+     public Command<object> TapCommand
+      {
+         get { return tapCommand; }
+         protected set { tapCommand = value; }
+      }
+ 
+     public ContactsViewModel()
+      {
+         tapCommand = new Command<object>(OnTapped);
+      }
+ 
+     public void OnTapped(object obj)
+      {
+         var name = (obj as Contacts).ContactName ;
+         var alert = Application.Current.MainPage.DisplayAlert("Parameter Passed","Name:" + name,"Cancel");
+      }
+ 
+ }
+ ```
 
-<listView:SfListView
-    x:Name="listView"
-    GroupHeaderSize="50"
-    IsStickyGroupHeader="True"
-    IsStickyHeader="True"
-    ItemSize="70"
-    ItemSpacing="0,0,5,0"
-    ItemsSource="{Binding contactsinfo}"
-    SelectionMode="Multiple"
-    TapCommand="{Binding}">
-    <listView:SfListView.Behaviors>
-        <local:EventToCommandBehavior
-            Command="{Binding TapCommand}"
-            Converter="{StaticResource EventArgs}"
-            EventName="ItemTapped" />
-    </listView:SfListView.Behaviors>
+Associate the command with the appropriate event of `SfListView` using behaviors.
 
-    <!--  ItemTemplate  -->
-    <listView:SfListView.ItemTemplate>
-        <DataTemplate>
-            <ViewCell>
-                <ViewCell.View>
-                    <Grid x:Name="grid" RowSpacing="1">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="1" />
-                        </Grid.RowDefinitions>
-                        <Grid RowSpacing="1">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="50" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="70" />
-                            </Grid.ColumnDefinitions>
-
-                            <Image
-                                HeightRequest="50"
-                                HorizontalOptions="Center"
-                                Source="{Binding ContactImage}"
-                                VerticalOptions="Center" />
-
-                            <Grid
-                                Grid.Column="1"
-                                Padding="10,0,0,0"
-                                RowSpacing="1"
-                                VerticalOptions="Center">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
-
-                                <Label
-                                    LineBreakMode="NoWrap"
-                                    Text="{Binding ContactName}"
-                                    TextColor="#474747" />
-                                <Label
-                                    Grid.Row="1"
-                                    Grid.Column="0"
-                                    LineBreakMode="NoWrap"
-                                    Text="{Binding ContactNumber}"
-                                    TextColor="#474747" />
-                            </Grid>
-                            <Grid
-                                Grid.Row="0"
-                                Grid.Column="2"
-                                Padding="0,10,10,0"
-                                HorizontalOptions="End"
-                                RowSpacing="0">
-                                <Label
-                                    LineBreakMode="NoWrap"
-                                    Text="{Binding ContactType}"
-                                    TextColor="#474747" />
-                            </Grid>
-                        </Grid>
-                    </Grid>
-                </ViewCell.View>
-            </ViewCell>
-        </DataTemplate>
-    </listView:SfListView.ItemTemplate>
+**Xaml**
+```
+ 
+<listView:SfListView x:Name="listView">
+        <listView:SfListView.Behaviors>
+          <local:EventToCommandBehavior EventName="ItemTapped" 
+                                        Command="{Binding TapCommand}"
+                                        Converter="{StaticResource EventArgs}" />
+        </listView:SfListView.Behaviors>
 </listView:SfListView>
-```
+ ```
+ 
 
-```c#
+Create a `CustomConverter` to extract `ItemData` from `ItemTappedEventArgs`.
+
+**C#**
+```
 public class CustomConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        object eventArgs = null;
-        Syncfusion.Maui.ListView.ItemTappedEventArgs eventArg = null;
-        if (value is Syncfusion.Maui.ListView.ItemTappedEventArgs)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            eventArg = value as Syncfusion.Maui.ListView.ItemTappedEventArgs;
-            eventArgs = eventArg.DataItem;
+            object eventArgs = null;
+            Syncfusion.Maui.ListView.ItemTappedEventArgs eventArg = null;
+            if (value is Syncfusion.ListView.XForms.ItemTappedEventArgs)
+            {
+                eventArg = value as Syncfusion.Maui.ListView.ItemTappedEventArgs;
+                eventArgs = eventArg.DataItem;
+            }
+           
+            return eventArgs;
         }
-        
-        return eventArgs;
+ 
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
     }
-}
+ 
 ```
 
-## Requirements to run the demo
+When a `ListViewItem` is tapped, the `ItemData` is returned from `CustomConverter` to the command in the `ViewModel`, enabling the desired operation to be performed.
 
-* [Visual Studio 2017](https://visualstudio.microsoft.com/downloads/) or [Visual Studio for Mac](https://visualstudio.microsoft.com/vs/mac/)
-* Xamarin add-ons for Visual Studio (available via the Visual Studio installer).
+**Output**
 
-## Troubleshooting
+![image.png](https://support.syncfusion.com/kb/attachment/article/15545/inline?token=eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE5NzMwIiwib3JnaWQiOiIzIiwiaXNzIjoic3VwcG9ydC5zeW5jZnVzaW9uLmNvbSJ9.a9fl80lMrbcAyy3MDr1yPouNa8CTQRmrh42gBxqomyA)
 
-### Path too long exception
 
-If you are facing path too long exception when building this example project, close Visual Studio and rename the repository to short and build the project.
+**Conclusion:**
+
+I hope you enjoyed learning how to pass the item data as a command parameter in the `ItemTapped` command.
+
+You can refer to our [.NET MAUI ListView](https://www.syncfusion.com/maui-controls/maui-listView) feature tour page to know about its other groundbreaking feature representations and [documentation](https://help.syncfusion.com/maui/listview/getting-started), and how to quickly get started with configuration specifications. 
+
+You can check out our components from the [License and Downloads](https://www.syncfusion.com/sales/teamlicense) page for current customers. If you are new to Syncfusion®, try our 30-day [free trial](https://www.syncfusion.com/downloads/maui) to check out our other controls.
+
+Please let us know in the comments section below if you have any queries or require clarification. You can also contact us through our [support forums](https://www.syncfusion.com/forums/), [Direct-Trac](https://support.syncfusion.com/create), or [feedback portal](https://www.syncfusion.com/feedback/maui?control=sflistview). We are always happy to assist you!
